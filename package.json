@@ -1,0 +1,17 @@
+{
+  "name": "consolidated-test",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://jis00646:20842341@ec2-54-64-185-226.ap-northeast-1.compute.amazonaws.com/tools/consolidated-test.git",
+  "author": "niwenhao <niwenhao@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^2.8.3"
+  },
+  "dependencies": {
+    "@types/express": "^4.11.1",
+    "axios": "^0.18.0",
+    "express": "^4.16.3",
+    "mongodb": "^3.1.0-beta4"
+  }
+}
