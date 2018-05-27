@@ -27,7 +27,30 @@ class Testcase {
 }
 
 class TestcaseVersion {
+    version: number
+    services: Array<Service>
     constructor(config: any) {
+        if (config.version && typeof config.version == "number") {
+            this.version = config.version
+        } else {
+            throw "The testcase need a numeric version number."
+        }
+        if (config.services && config.services.length > 0) {
+            this.services = config.services.map((config: any) => new Service(config))
+        } else {
+            throw "At least one service should be defined."
+        }
+    }
+}
+
+class Service {
+    name: string
+    constructor(config: any) {
+        if (config.name) {
+            this.name = config.name
+        } else {
+            throw "The service name is needed."
+        }
     }
 }
 
