@@ -1,3 +1,5 @@
+import { Request, Response } from 'express'
+
 /**
  * This file description entities for scritch a testcase
  * It will store in a mongo collection.
@@ -50,9 +52,15 @@ class TestcaseVersion {
 
 class Service {
 	name: string
+	matcher: RequestMatcher
 	constructor(config: any) {
 		if (config.name) {
 			this.name = config.name
+			if (config.matcher) {
+				this.matcher = new RequestMatcher(config.matcher)
+			} else {
+				throw `The service ${this.name} need a matcher`
+			}
 		} else {
 			throw "The service name is needed."
 		}
@@ -63,10 +71,38 @@ class RequestMatcher {
 	constructor(config: any) {}
 }
 
-class VariableDefine {
-	constructor(config: any) {}
+const conditionMap: {[key: string]: (config:any) => Condition} = {}
+
+interface Condition {
+	matches(req: Request): boolean
 }
 
-class Condition {
-	constructor(config: any) {}
+class UrlRegexCondition implements Condition {
+	static readonly creator = (config: any) => new UrlRegexCondition(config)
+
+	regex: RegExp
+	
+	constructor(config: any) {
+		if (config.pattern) {
+			this.regex = new RegExp(config.pattern)
+		} else {
+			throw "The urlRegex need a pattern"
+		}
+	}
+	matches(req: Request) {
+		return this.regex.exec(req.url) != null
+	}
+}
+
+conditionMap['urlRegexp'] = UrlRegexCondition.creator
+
+class QueryParameterCondition implements Condition {
+	static readonly creator = (config: any) => new QueryParameterCondition(config)
+
+	constructor(config: any) {
+		if ()
+	}
+	matches(req: Request) {
+		return false
+	}
 }
