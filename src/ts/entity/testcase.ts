@@ -1,5 +1,6 @@
-import { Request, Response } from 'express'
-
+import { Matcher, AndMatcher, OrMatcher } from '../http-matcher/matcher';
+import { Request } from 'express';
+import { ADDRCONFIG } from 'dns';
 /**
  * This file description entities for scritch a testcase
  * It will store in a mongo collection.
@@ -71,38 +72,42 @@ class RequestMatcher {
 	constructor(config: any) {}
 }
 
-const conditionMap: {[key: string]: (config:any) => Condition} = {}
+type ReqMatcher = Matcher<Request>
+type ConditionFactory = (config: object | null) => ReqMatcher
 
-interface Condition {
-	matches(req: Request): boolean
+let RequestConditonFactories: {[key:string]: ConditionFactory} = {}
+
+RequestConditonFactories.and = (config:any) => {
+	if (config instanceof Map) {
+		let matches : ReqMatcher[] = []
+		config.forEach((value, key) => {
+			let f = RequestConditonFactories[key]
+			if (f) {
+				matches.push(f(value))
+			} else {
+				throw `Condition ${key} was not found`
+			}
+		})
+		return new AndMatcher(matches)
+	} else {
+		throw "And condition need some subconditions"
+	}
 }
 
-class UrlRegexCondition implements Condition {
-	static readonly creator = (config: any) => new UrlRegexCondition(config)
+RequestConditonFactories.or = (config: any) => {
+	if (config instanceof Map) {
+		let matches = [] as ReqMatcher[]
+		config.forEach((value, key) => {
+			let f = RequestConditonFactories[key]
+			if (f) {
+				matches.push(f(value))
+			} else {
+				throw `Condition ${key} was not found`
+			}
 
-	regex: RegExp
-	
-	constructor(config: any) {
-		if (config.pattern) {
-			this.regex = new RegExp(config.pattern)
-		} else {
-			throw "The urlRegex need a pattern"
-		}
-	}
-	matches(req: Request) {
-		return this.regex.exec(req.url) != null
-	}
-}
-
-conditionMap['urlRegexp'] = UrlRegexCondition.creator
-
-class QueryParameterCondition implements Condition {
-	static readonly creator = (config: any) => new QueryParameterCondition(config)
-
-	constructor(config: any) {
-		if ()
-	}
-	matches(req: Request) {
-		return false
+		})
+		return new OrMatcher(matches)
+	} else {
+		throw "Or condition need some subconditions"
 	}
 }
