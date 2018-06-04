@@ -1,6 +1,7 @@
 import { Matcher, AndMatcher, OrMatcher } from '../http-matcher/matcher';
 import { Request } from 'express';
 import { ADDRCONFIG } from 'dns';
+import { ExpressRequestUrlMatcher, ExpressRequestQueryMatcher, ExpressRequestHeadMatcher, ExpressRequestBodyMatcher, ExpressRequestJsonQueryBodyMatcher } from '../http-matcher/ExpressRequestMatcher';
 /**
  * This file description entities for scritch a testcase
  * It will store in a mongo collection.
@@ -62,6 +63,9 @@ class Service {
 			} else {
 				throw `The service ${this.name} need a matcher`
 			}
+			if (config.response) {
+
+			}
 		} else {
 			throw "The service name is needed."
 		}
@@ -69,7 +73,29 @@ class Service {
 }
 
 class RequestMatcher {
-	constructor(config: any) {}
+	matcher: Matcher<Request>
+	constructor(config: any) {
+		if (config instanceof Map) {
+			let entList: { key:string, value: any}[] = []
+			let iter = config.forEach((value, key) => {
+				entList.push({key: key, value: value})
+			})
+			if (entList.length != 1) {
+				throw "The request matcher has only one sub condition"
+			}
+
+			let { key, value } = entList[0]
+
+			let factory = RequestConditonFactories[key]
+			if (factory) {
+				this.matcher = factory(value)
+			} else {
+				throw `Cann't found conditon for ${key}`
+			}
+		} else {
+			throw "Conditon config need be a map"
+		}
+	}
 }
 
 type ReqMatcher = Matcher<Request>
@@ -109,5 +135,45 @@ RequestConditonFactories.or = (config: any) => {
 		return new OrMatcher(matches)
 	} else {
 		throw "Or condition need some subconditions"
+	}
+}
+
+RequestConditonFactories.url = (config: any) => {
+	if (typeof config.pattern == "string") {
+		return new ExpressRequestUrlMatcher("", config.pattern)
+	} else {
+		throw "Url condition need a pattern"
+	}
+}
+
+RequestConditonFactories.query = (config: any) => {
+	if (typeof config.name == "string" && typeof config.pattern == "string") {
+		return new ExpressRequestQueryMatcher(config.name, config.pattern)
+	} else {
+		throw 'Query condition need name and pattern'
+	}
+}
+
+RequestConditonFactories.header = (config: any) => {
+	if (typeof config.name == "string" && typeof config.pattern == "string") {
+		return new ExpressRequestHeadMatcher(config.name, config.pattern)
+	} else {
+		throw 'Header condition need name and pattern'
+	}
+}
+
+RequestConditonFactories.form = (config: any) => {
+	if (typeof config.name == "string" && typeof config.pattern == "string") {
+		return new ExpressRequestBodyMatcher(config.name, config.pattern)
+	} else {
+		throw 'From condition need name and pattern'
+	}
+}
+
+RequestConditonFactories.json = (config: any) => {
+	if (typeof config.query == "string" && typeof config.pattern == "string") {
+		return new ExpressRequestJsonQueryBodyMatcher(config.query, config.pattern)
+	} else {
+		throw 'Json condition need query and pattern'
 	}
 }
