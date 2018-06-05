@@ -2,6 +2,7 @@ import { Matcher, AndMatcher, OrMatcher } from '../http-matcher/matcher';
 import { Request } from 'express';
 import { ADDRCONFIG } from 'dns';
 import { ExpressRequestUrlMatcher, ExpressRequestQueryMatcher, ExpressRequestHeadMatcher, ExpressRequestBodyMatcher, ExpressRequestJsonQueryBodyMatcher } from '../http-matcher/ExpressRequestMatcher';
+import { ConditionFactory, RequestConditonFactories } from './request-condition'
 /**
  * This file description entities for scritch a testcase
  * It will store in a mongo collection.
@@ -55,6 +56,7 @@ class TestcaseVersion {
 class Service {
 	name: string
 	matcher: RequestMatcher
+	response: Response
 	constructor(config: any) {
 		if (config.name) {
 			this.name = config.name
@@ -63,12 +65,32 @@ class Service {
 			} else {
 				throw `The service ${this.name} need a matcher`
 			}
-			if (config.response) {
-
+			if (config.relay) {
+				this.response = new RelayResponse(config.relay)
+			} else if (config.response) {
+				this.response = new ContentResponse(config.response)
+			} else {
+				throw "The element after matcher need be a relay or a response"
 			}
 		} else {
 			throw "The service name is needed."
 		}
+	}
+}
+
+interface Response {
+
+}
+
+class ContentResponse implements Response {
+	constructor(config: any) {
+
+	}
+}
+
+class RelayResponse implements Response {
+	constructor(config: any) {
+
 	}
 }
 
@@ -98,82 +120,3 @@ class RequestMatcher {
 	}
 }
 
-type ReqMatcher = Matcher<Request>
-type ConditionFactory = (config: object | null) => ReqMatcher
-
-let RequestConditonFactories: {[key:string]: ConditionFactory} = {}
-
-RequestConditonFactories.and = (config:any) => {
-	if (config instanceof Map) {
-		let matches : ReqMatcher[] = []
-		config.forEach((value, key) => {
-			let f = RequestConditonFactories[key]
-			if (f) {
-				matches.push(f(value))
-			} else {
-				throw `Condition ${key} was not found`
-			}
-		})
-		return new AndMatcher(matches)
-	} else {
-		throw "And condition need some subconditions"
-	}
-}
-
-RequestConditonFactories.or = (config: any) => {
-	if (config instanceof Map) {
-		let matches = [] as ReqMatcher[]
-		config.forEach((value, key) => {
-			let f = RequestConditonFactories[key]
-			if (f) {
-				matches.push(f(value))
-			} else {
-				throw `Condition ${key} was not found`
-			}
-
-		})
-		return new OrMatcher(matches)
-	} else {
-		throw "Or condition need some subconditions"
-	}
-}
-
-RequestConditonFactories.url = (config: any) => {
-	if (typeof config.pattern == "string") {
-		return new ExpressRequestUrlMatcher("", config.pattern)
-	} else {
-		throw "Url condition need a pattern"
-	}
-}
-
-RequestConditonFactories.query = (config: any) => {
-	if (typeof config.name == "string" && typeof config.pattern == "string") {
-		return new ExpressRequestQueryMatcher(config.name, config.pattern)
-	} else {
-		throw 'Query condition need name and pattern'
-	}
-}
-
-RequestConditonFactories.header = (config: any) => {
-	if (typeof config.name == "string" && typeof config.pattern == "string") {
-		return new ExpressRequestHeadMatcher(config.name, config.pattern)
-	} else {
-		throw 'Header condition need name and pattern'
-	}
-}
-
-RequestConditonFactories.form = (config: any) => {
-	if (typeof config.name == "string" && typeof config.pattern == "string") {
-		return new ExpressRequestBodyMatcher(config.name, config.pattern)
-	} else {
-		throw 'From condition need name and pattern'
-	}
-}
-
-RequestConditonFactories.json = (config: any) => {
-	if (typeof config.query == "string" && typeof config.pattern == "string") {
-		return new ExpressRequestJsonQueryBodyMatcher(config.query, config.pattern)
-	} else {
-		throw 'Json condition need query and pattern'
-	}
-}
