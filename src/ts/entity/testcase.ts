@@ -3,6 +3,7 @@ import { Request } from 'express';
 import { ADDRCONFIG } from 'dns';
 import { ExpressRequestUrlMatcher, ExpressRequestQueryMatcher, ExpressRequestHeadMatcher, ExpressRequestBodyMatcher, ExpressRequestJsonQueryBodyMatcher } from '../http-matcher/ExpressRequestMatcher';
 import { ConditionFactory, RequestConditonFactories } from './request-condition'
+import BodyConverter from './body-generator'
 /**
  * This file description entities for scritch a testcase
  * It will store in a mongo collection.
@@ -82,9 +83,25 @@ interface Response {
 
 }
 
+type Header = { name: string, value: string }
 class ContentResponse implements Response {
+	status: number
+	headers: Header[]
+	contentType: string
+	body: Buffer
 	constructor(config: any) {
-
+		this.status = config.status ? config.status : 200
+		this.headers = config.headers ? config.headers : []
+		if (!config.contentType) {
+			throw "A response need a content-type."
+		} else {
+			this.contentType = config.contentType
+		}
+		if (!config.body) {
+			throw "A response need body."
+		} else {
+			this.body = BodyConverter(this.contentType, config.body)
+		}
 	}
 }
 
