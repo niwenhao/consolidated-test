@@ -1,8 +1,7 @@
 import { Matcher, AndMatcher, OrMatcher } from '../http-matcher/matcher';
 import { Request } from 'express';
-import { ADDRCONFIG } from 'dns';
-import { ExpressRequestUrlMatcher, ExpressRequestQueryMatcher, ExpressRequestHeadMatcher, ExpressRequestBodyMatcher, ExpressRequestJsonQueryBodyMatcher } from '../http-matcher/ExpressRequestMatcher';
-import { ConditionFactory, RequestConditonFactories } from './request-condition'
+import { AxiosResponse } from 'axios'
+import { RequestConditonFactories } from './request-condition'
 import BodyConverter from './body-generator'
 /**
  * This file description entities for scritch a testcase
@@ -106,8 +105,8 @@ class ContentResponse implements Response {
 }
 
 class RelayResponse implements Response {
+	matcher: Matcher<AxiosResponse>
 	constructor(config: any) {
-
 	}
 }
 
