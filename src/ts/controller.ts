@@ -1,18 +1,25 @@
 import * as express from 'express'
 import { MongoClient } from 'mongodb'
 import { Testcase } from './entity/testcase';
+import { insertTestcase, findTestcaseByName, findTestcaseName } from './storage-service';
 
 const app = express()
 
-const testcase_ep = "/v1/testcase"
-
-//Take the test result
-app.get('/v1/results/indexes', (req, res) => {
-
+app.get('/v1/testcases/name', (req, res)=> {
+    findTestcaseName().then((names) => {
+        res.json(names)
+    })
 })
 
-app.post(testcase_ep, (req, res) => {
+app.get('/v1/testcases/:name/versions/version', (req, res)=> {
+    findTestcaseByName(req.params.name).then((testcase) => {
+        res.json(testcase.version)
+    })
+})
+
+app.post('/v1/testcases', (req, res) => {
     let testcase = new Testcase(req.body)
+    insertTestcase(req.body)
 })
 
 app.listen(1234, () => {
