@@ -8,7 +8,7 @@ import { ResponseConditionFactory } from './response-condition';
  * This file description entities for scritch a testcase
  * It will be stored in a mongo collection.
  */
-class Testcase {
+export class Testcase {
 	name: string
 	labels: Array<{key: string, value: string}> = []
 	versions: Array<TestcaseVersion>
