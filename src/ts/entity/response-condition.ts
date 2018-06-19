@@ -1,5 +1,6 @@
 import { AxiosResponse } from 'axios'
-import { Matcher, AndMatcher } from '../http-matcher/matcher';
+import { Matcher, AndMatcher, OrMatcher } from '../http-matcher/matcher';
+import { AxiosResponseHeadMatcher, AxiosResponseJsonQueryBodyMatcher, AxiosResponseBodyMatcher } from '../http-matcher/AxiosResponseMatcher';
 
 
 type ResMatcher = Matcher<AxiosResponse>
@@ -42,42 +43,26 @@ ResponseConditionFactory.or = (config: any) => {
 	}
 }
 
-ResponseConditionFactory.url = (config: any) => {
-	if (typeof config.pattern == "string") {
-		return new ExpressRequestUrlMatcher("", config.pattern)
-	} else {
-		throw "Url condition need a pattern"
-	}
-}
-
-RequestConditonFactories.query = (config: any) => {
+ResponseConditionFactory.header = (config: any) => {
 	if (typeof config.name == "string" && typeof config.pattern == "string") {
-		return new ExpressRequestQueryMatcher(config.name, config.pattern)
-	} else {
-		throw 'Query condition need name and pattern'
-	}
-}
-
-RequestConditonFactories.header = (config: any) => {
-	if (typeof config.name == "string" && typeof config.pattern == "string") {
-		return new ExpressRequestHeadMatcher(config.name, config.pattern)
+		return new AxiosResponseHeadMatcher(config.name, config.pattern)
 	} else {
 		throw 'Header condition need name and pattern'
 	}
 }
 
-RequestConditonFactories.form = (config: any) => {
-	if (typeof config.name == "string" && typeof config.pattern == "string") {
-		return new ExpressRequestBodyMatcher(config.name, config.pattern)
+ResponseConditionFactory.json = (config: any) => {
+	if (typeof config.query == "string" && typeof config.pattern == "string") {
+		return new AxiosResponseJsonQueryBodyMatcher(config.query, config.pattern)
 	} else {
-		throw 'From condition need name and pattern'
+		throw 'Json condition need query and pattern'
 	}
 }
 
-RequestConditonFactories.json = (config: any) => {
-	if (typeof config.query == "string" && typeof config.pattern == "string") {
-		return new ExpressRequestJsonQueryBodyMatcher(config.query, config.pattern)
+ResponseConditionFactory.body = (config: any) => {
+	if (typeof config.pattern == "string") {
+		return new AxiosResponseBodyMatcher("", config.pattern)
 	} else {
-		throw 'Json condition need query and pattern'
+		throw 'Body condition need marching pattern'
 	}
 }

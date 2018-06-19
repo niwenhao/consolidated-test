@@ -3,9 +3,10 @@ import { Request } from 'express';
 import { AxiosResponse } from 'axios'
 import { RequestConditonFactories } from './request-condition'
 import BodyConverter from './body-generator'
+import { ResponseConditionFactory } from './response-condition';
 /**
  * This file description entities for scritch a testcase
- * It will store in a mongo collection.
+ * It will be stored in a mongo collection.
  */
 class Testcase {
 	name: string
@@ -107,6 +108,27 @@ class ContentResponse implements Response {
 class RelayResponse implements Response {
 	matcher: Matcher<AxiosResponse>
 	constructor(config: any) {
+		if (config instanceof Map) {
+			let entList: {key:string, value: any}[] = []
+			let iter = config.forEach((value, key) => {
+				entList.push({key: key, value: value})
+			})
+
+			if (entList.length != 1) {
+				throw "The response matcher has only one sub condition"
+			}
+
+			let { key, value } = entList[0]
+
+			let factory = ResponseConditionFactory[key]
+			if (factory) {
+				this.matcher = factory(value)
+			} else {
+				throw `Cann't found conditon for ${key}`
+			}
+		} else {
+			throw "Conditon config need be a map"
+		}
 	}
 }
 
